@@ -4,8 +4,12 @@ name: Release
 # no existe todavía en el registry (publish-on-version-bump). Releasear =
 # bumpear "version" en el package.json del paquete + push a main.
 #
-# Requiere el secret NPM_TOKEN (granular access token de npmjs.com con permiso
-# Read and write sobre estos paquetes). Ver PUBLISHING.md.
+# Auth (una de dos; ver PUBLISHING.md):
+# - Trusted Publishing (OIDC, recomendado): configura este repo + "release.yml"
+#   como Trusted Publisher en cada paquete en npmjs.com. Sin token, sin
+#   expiración. `id-token: write` abajo es lo que lo habilita.
+# - Fallback: secret NPM_TOKEN (granular token; npm ya no emite tokens sin
+#   expiración — máx ~90 días, hay que rotarlo).
 
 on:
   push:
@@ -24,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write   # OIDC para npm Trusted Publishing
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,6 +36,8 @@ jobs:
           node-version: 20
           cache: npm
           registry-url: https://registry.npmjs.org
+      # Trusted Publishing (OIDC) requiere npm >= 11.5; Node 20 trae npm 10.
+      - run: npm install -g npm@latest
       - run: npm ci
       - run: npm run build
       - run: npm test

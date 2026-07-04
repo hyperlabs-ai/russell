@@ -41,14 +41,37 @@ maintainer, o `npm owner add <org-user> russell-schema`.
 ## 3. Publicación automática (GitHub Actions → npm)
 
 `.github/workflows/release.yml` publica en cada push a `main` los paquetes cuya
-versión local **no exista aún** en npm. Para activarla (una sola vez):
+versión local **no exista aún** en npm. Hay dos formas de darle credenciales:
 
-1. En npmjs.com → Access Tokens → **Generate New Token → Granular Access Token**:
-   permiso *Read and write*, scope limitado a `russell-schema` y
-   `russell-validator` (tras el primer publish manual; antes, scope "all packages"),
-   expiración larga.
-2. En el repo de GitHub → Settings → Secrets and variables → Actions →
-   **New repository secret**: nombre `NPM_TOKEN`, valor el token.
+### Opción recomendada: Trusted Publishing (OIDC — sin token, sin expiración)
+
+npm ya no emite tokens sin expiración (los granulares duran máx ~90 días).
+Trusted Publishing elimina el problema: registras el repo+workflow como
+publicador confiable y GitHub Actions se autentica por OIDC, sin secrets.
+
+Para cada paquete (requiere que ya exista, es decir, tras el primer publish
+manual): en npmjs.com → página del paquete → **Settings → Trusted Publisher**
+→ GitHub Actions →
+  - Organization or user: `<tu-usuario>` (o `hyperlabs-ai` tras la transferencia)
+  - Repository: `russell`
+  - Workflow filename: `release.yml`
+
+El workflow ya trae `id-token: write` y el upgrade a npm ≥ 11.5 que OIDC
+necesita. Nada más que hacer — y nunca expira.
+
+Nota: al publicar por OIDC npm genera provenance por defecto y valida que
+`repository.url` del package.json coincida con el repo que buildea; configura
+el Trusted Publisher cuando el repo ya viva en su URL definitiva (o ajusta
+`repository.url` a la actual).
+
+### Fallback: token granular (expira, hay que rotar)
+
+1. npmjs.com → Access Tokens → **Granular Access Token**: *Read and write*,
+   scope limitado a `russell-schema` y `russell-validator`, expiración máxima.
+2. Repo de GitHub → Settings → Secrets and variables → Actions →
+   **New repository secret**: nombre `NPM_TOKEN`.
+3. Apunta la fecha de expiración: cuando llegue, el workflow fallará con 401
+   hasta regenerar el token y actualizar el secret.
 
 Flujo de release a partir de ahí:
 
