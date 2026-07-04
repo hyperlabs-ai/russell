@@ -1,5 +1,5 @@
 {
-  "name": "@hyperlabs-ai/russell-validator",
+  "name": "russell-validator",
   "version": "0.1.0",
   "description": "Validator and CLI for Russell agent definitions: structural (JSON Schema) + semantic (graph integrity, node type catalog, per-type params)",
   "license": "MIT",
@@ -47,7 +47,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@hyperlabs-ai/russell-schema": "0.1.0",
+    "russell-schema": "0.1.0",
     "ajv": "^8.17.1"
   },
   "devDependencies": {

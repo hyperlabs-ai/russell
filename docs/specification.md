@@ -130,13 +130,13 @@ Deterministic, code-implemented protections (no LLM involved).
 
 ## Validation
 
-`@hyperlabs-ai/russell-validator` applies two layers:
+`russell-validator` applies two layers:
 
 1. **Structural** — the JSON Schema (Ajv, draft 2020-12).
 2. **Semantic** — cross-references a schema can't express: duplicate node ids, unknown node types, graph references to nonexistent nodes, `branch_after` outside `entry`, per-type `params` validation, plus warnings (missing wildcard route, unreachable routes, unreferenced nodes, prompts on deterministic nodes).
 
 ```ts
-import { validateAgent } from "@hyperlabs-ai/russell-validator";
+import { validateAgent } from "russell-validator";
 
 const result = validateAgent(definition);
 // { valid: boolean, errors: Issue[], warnings: Issue[] }

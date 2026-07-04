@@ -14,7 +14,7 @@ import {
   russellSchema,
   type NodeDef,
   type RussellAgent,
-} from "@hyperlabs-ai/russell-schema";
+} from "russell-schema";
 
 export interface Issue {
   /** JSON path aproximado del problema (ej. "/nodes/3/params"). */
@@ -175,5 +175,5 @@ export function validateAgent(input: unknown): ValidationResult {
   return { valid: errors.length === 0, errors, warnings };
 }
 
-export { nodeTypeCatalog, russellSchema } from "@hyperlabs-ai/russell-schema";
-export type { RussellAgent } from "@hyperlabs-ai/russell-schema";
+export { nodeTypeCatalog, russellSchema } from "russell-schema";
+export type { RussellAgent } from "russell-schema";

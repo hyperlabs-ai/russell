@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { validateAgent } from "../src/index.js";
-import type { RussellAgent } from "@hyperlabs-ai/russell-schema";
+import type { RussellAgent } from "russell-schema";
 
 const doryPath = fileURLToPath(
   new URL("../../../examples/dory.russell.json", import.meta.url),

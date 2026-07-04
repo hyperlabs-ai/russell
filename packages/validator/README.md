@@ -1,9 +1,9 @@
-# @hyperlabs-ai/russell-validator
+# russell-validator
 
 Validator and CLI for [Russell](https://github.com/hyperlabs-ai/russell) agent definitions. Two layers: structural (JSON Schema via Ajv) and semantic (graph integrity, node type catalog, per-type params) — the cross-reference checks a schema alone can't express.
 
 ```bash
-npm install @hyperlabs-ai/russell-validator
+npm install russell-validator
 ```
 
 ## CLI
@@ -16,7 +16,7 @@ russell node-types                       # list the node type catalog
 ## API
 
 ```ts
-import { validateAgent } from "@hyperlabs-ai/russell-validator";
+import { validateAgent } from "russell-validator";
 
 const result = validateAgent(definition);
 // {

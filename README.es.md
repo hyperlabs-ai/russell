@@ -21,22 +21,22 @@ La apuesta de diseño que sostiene la calidad: **la calidad se hereda, no se dec
 
 | Paquete | Qué es |
 |---|---|
-| [`@hyperlabs-ai/russell-schema`](packages/schema) | El formato: JSON Schema (draft 2020-12), catálogo de tipos de nodo y tipos TypeScript |
-| [`@hyperlabs-ai/russell-validator`](packages/validator) | Validación en dos capas (estructural + semántica de grafo/catálogo) y el CLI `russell` |
+| [`russell-schema`](packages/schema) | El formato: JSON Schema (draft 2020-12), catálogo de tipos de nodo y tipos TypeScript |
+| [`russell-validator`](packages/validator) | Validación en dos capas (estructural + semántica de grafo/catálogo) y el CLI `russell` |
 
 ```bash
-npm install @hyperlabs-ai/russell-validator
+npm install russell-validator
 ```
 
 ## Inicio rápido
 
 ```bash
-npx --package=@hyperlabs-ai/russell-validator russell validate mi-agente.russell.json
-npx --package=@hyperlabs-ai/russell-validator russell node-types
+npx --package=russell-validator russell validate mi-agente.russell.json
+npx --package=russell-validator russell node-types
 ```
 
 ```ts
-import { validateAgent } from "@hyperlabs-ai/russell-validator";
+import { validateAgent } from "russell-validator";
 
 const result = validateAgent(JSON.parse(fs.readFileSync("mi-agente.russell.json", "utf-8")));
 if (!result.valid) console.error(result.errors);   // errors bloquean; warnings aconsejan
@@ -45,7 +45,7 @@ if (!result.valid) console.error(result.errors);   // errors bloquean; warnings 
 **Autocompletado en el editor** — apunta `$schema` al schema del formato y cualquier editor con soporte JSON valida mientras escribes:
 
 ```jsonc
-{ "$schema": "./node_modules/@hyperlabs-ai/russell-schema/schemas/russell.schema.json", ... }
+{ "$schema": "./node_modules/russell-schema/schemas/russell.schema.json", ... }
 ```
 
 ## Documentación

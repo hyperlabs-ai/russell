@@ -49,11 +49,11 @@ The design bet that keeps quality high: **quality is inherited, not declared.** 
 
 | Package | What it is |
 |---|---|
-| [`@hyperlabs-ai/russell-schema`](packages/schema) | The format: JSON Schema (draft 2020-12), node type catalog, TypeScript types |
-| [`@hyperlabs-ai/russell-validator`](packages/validator) | Two-layer validation (structural + graph/catalog semantics) and the `russell` CLI |
+| [`russell-schema`](packages/schema) | The format: JSON Schema (draft 2020-12), node type catalog, TypeScript types |
+| [`russell-validator`](packages/validator) | Two-layer validation (structural + graph/catalog semantics) and the `russell` CLI |
 
 ```bash
-npm install @hyperlabs-ai/russell-validator
+npm install russell-validator
 ```
 
 ## Quickstart
@@ -61,14 +61,14 @@ npm install @hyperlabs-ai/russell-validator
 **CLI:**
 
 ```bash
-npx --package=@hyperlabs-ai/russell-validator russell validate my-agent.russell.json
-npx --package=@hyperlabs-ai/russell-validator russell node-types
+npx --package=russell-validator russell validate my-agent.russell.json
+npx --package=russell-validator russell node-types
 ```
 
 **Programmatic:**
 
 ```ts
-import { validateAgent } from "@hyperlabs-ai/russell-validator";
+import { validateAgent } from "russell-validator";
 
 const result = validateAgent(JSON.parse(fs.readFileSync("my-agent.russell.json", "utf-8")));
 if (!result.valid) console.error(result.errors);   // errors block; warnings advise
@@ -77,7 +77,7 @@ if (!result.valid) console.error(result.errors);   // errors block; warnings adv
 **Editor autocomplete** — point `$schema` at the format schema and any JSON-aware editor validates as you type:
 
 ```jsonc
-{ "$schema": "./node_modules/@hyperlabs-ai/russell-schema/schemas/russell.schema.json", ... }
+{ "$schema": "./node_modules/russell-schema/schemas/russell.schema.json", ... }
 ```
 
 ## Documentation
