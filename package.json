@@ -1,6 +1,13 @@
 {
   "name": "russell-monorepo",
   "private": true,
+  "description": "Russell — a declarative language for conversational agents. Monorepo: @hyperlabs-ai/russell-schema + @hyperlabs-ai/russell-validator",
+  "license": "MIT",
+  "author": "Hyperlabs AI <cris@hyperdigital.mx>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hyperlabs-ai/russell.git"
+  },
   "workspaces": [
     "packages/*"
   ],

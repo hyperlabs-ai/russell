@@ -1,9 +1,27 @@
 {
-  "name": "@russell/schema",
+  "name": "@hyperlabs-ai/russell-schema",
   "version": "0.1.0",
-  "description": "Formato Russell: JSON Schema del agente conversacional + catálogo de tipos de nodo + tipos TypeScript",
+  "description": "Russell agent format: JSON Schema for declarative conversational agents, node type catalog, and TypeScript types",
   "license": "MIT",
-  "keywords": ["russell", "agents", "schema", "hyperflow"],
+  "author": "Hyperlabs AI <cris@hyperdigital.mx>",
+  "homepage": "https://github.com/hyperlabs-ai/russell#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hyperlabs-ai/russell.git",
+    "directory": "packages/schema"
+  },
+  "bugs": {
+    "url": "https://github.com/hyperlabs-ai/russell/issues"
+  },
+  "keywords": [
+    "russell",
+    "agents",
+    "conversational-agents",
+    "declarative",
+    "json-schema",
+    "llm",
+    "hyperflow"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -19,9 +37,13 @@
     "dist",
     "schemas"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

@@ -1,5 +1,5 @@
 /**
- * @russell/schema — formato de agente Russell 1.0.
+ * @hyperlabs-ai/russell-schema — formato de agente Russell 1.0.
  *
  * Exporta el JSON Schema canónico, el catálogo de tipos de nodo y los tipos TS.
  * Los archivos .json en schemas/ son la fuente de verdad (diffable, portable);
