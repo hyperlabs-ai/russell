@@ -38,13 +38,39 @@ Para transferir los paquetes a la org npm más adelante (opcional; los unscoped
 no necesitan org): en npmjs.com, package → Settings → invita a la org como
 maintainer, o `npm owner add <org-user> russell-schema`.
 
-## 3. Releases siguientes
+## 3. Publicación automática (GitHub Actions → npm)
 
-1. Cambios + `npm test` en verde.
-2. Bump de versión en el/los package.json afectados (si cambia el schema, bump
-   en ambos: el validator lo consume con versión exacta).
-3. Actualiza CHANGELOG.md.
-4. `npm publish -w <paquete>` y tag de git (`git tag v0.2.0 && git push --tags`).
+`.github/workflows/release.yml` publica en cada push a `main` los paquetes cuya
+versión local **no exista aún** en npm. Para activarla (una sola vez):
+
+1. En npmjs.com → Access Tokens → **Generate New Token → Granular Access Token**:
+   permiso *Read and write*, scope limitado a `russell-schema` y
+   `russell-validator` (tras el primer publish manual; antes, scope "all packages"),
+   expiración larga.
+2. En el repo de GitHub → Settings → Secrets and variables → Actions →
+   **New repository secret**: nombre `NPM_TOKEN`, valor el token.
+
+Flujo de release a partir de ahí:
+
+1. Cambios + bump de `version` en el package.json del paquete afectado
+   (si cambia el schema, bump en ambos: el validator lo consume con versión exacta).
+2. Actualiza CHANGELOG.md, push a `main` (o merge del PR).
+3. El workflow corre build + tests + validate, detecta qué versiones son nuevas
+   y publica solo esas. Sin bump de versión, el push no publica nada.
+
+Cómo "detecta" el monorepo y las rutas no-raíz:
+
+- `on.push.paths: packages/**` — el workflow ni corre si el push no toca paquetes.
+- El check `npm view <pkg>@<version>` — de los paquetes tocados, solo publica
+  los que tienen versión nueva (bumpear la versión ES el gatillo de release).
+- `npm publish -w <pkg>` — publica el workspace correcto desde la raíz.
+- `repository.directory` en cada package.json — le dice a npm/GitHub en qué
+  subcarpeta vive cada paquete (los links de la página de npm apuntan bien).
+
+Opcional más adelante (paquetes ya publicados + repo ya en su URL definitiva):
+**provenance**. Agrega `id-token: write` a permissions y `--provenance` al
+publish — npm verifica que `repository.url` coincida con el repo que buildea,
+así que actívalo hasta después de transferir el repo a hyperlabs-ai.
 
 ## Notas
 
