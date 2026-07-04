@@ -1,0 +1,147 @@
+{
+  "catalogVersion": "1.0",
+  "description": "Catálogo de tipos de nodo Russell v1. Cada runtime (Python hoy, TS después) implementa este registry con la misma semántica. `kind: deterministic` = sin LLM (rápido, barato, testeable); `kind: llm` = invoca un modelo.",
+  "types": {
+    "input_guard": {
+      "kind": "deterministic",
+      "description": "Saneamiento de ingreso pre-clasificación: rechaza mensajes vacíos, recorta oversize y detecta prompt-injection por patrones (si hay, escala a humano).",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "max_chars": { "type": "integer", "minimum": 1 },
+          "detect_injection": { "type": "boolean", "default": true },
+          "empty_message_response": { "type": "string" }
+        }
+      }
+    },
+    "aggregator": {
+      "kind": "deterministic",
+      "description": "Agrega mensajes consecutivos del cliente en un solo turno lógico (debounce de mensajería).",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "window_ms": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "reception": {
+      "kind": "deterministic",
+      "description": "Normaliza el turno entrante: texto, tipo de media, canal y metadata del contacto.",
+      "params_schema": { "type": "object", "additionalProperties": false, "properties": {} }
+    },
+    "llm_classifier": {
+      "kind": "llm",
+      "description": "Clasifica el turno en una etiqueta del conjunto `labels` con JSON estricto y confianza [0,1]. Si la confianza queda bajo el umbral, marca escalación.",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "labels": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "fallback_label": { "type": "string" },
+          "confidence_threshold": { "type": "number", "minimum": 0, "maximum": 1 },
+          "escalate_below_threshold": { "type": "boolean", "default": true },
+          "history_turns": { "type": "integer", "minimum": 0, "default": 4 }
+        }
+      }
+    },
+    "llm_extractor": {
+      "kind": "llm",
+      "description": "Extrae datos estructurados del texto del turno (p. ej. items de pedido) en JSON estricto.",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "output_key": { "type": "string" }
+        }
+      }
+    },
+    "llm_vision": {
+      "kind": "llm",
+      "description": "Extrae datos estructurados de imágenes adjuntas al turno (modelo multimodal).",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "output_key": { "type": "string" }
+        }
+      }
+    },
+    "llm_prompt": {
+      "kind": "llm",
+      "description": "Nodo LLM genérico de conversación: responde con el prompt del nodo + persona/contexto según `compose`. (FAQ, saludo, conversación general.)",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "output_key": { "type": "string" }
+        }
+      }
+    },
+    "intake": {
+      "kind": "deterministic",
+      "description": "Máquina de estados de captura: acumula los campos requeridos a través de turnos y calcula el progreso del intake.",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "required_fields": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "catalog_search": {
+      "kind": "deterministic",
+      "description": "Busca los items extraídos contra el catálogo del workspace (embeddings/SKU match) y resuelve productos con precio.",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "top_k": { "type": "integer", "minimum": 1 },
+          "threshold": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
+    "quote_builder": {
+      "kind": "deterministic",
+      "description": "Construye la cotización a partir de los productos resueltos y, si el commit está habilitado, la persiste en el CRM.",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "commit_enabled": { "type": "boolean", "default": false },
+          "valid_days": { "type": "integer", "minimum": 1 },
+          "auto_send": { "type": "boolean", "default": false }
+        }
+      }
+    },
+    "response_composer": {
+      "kind": "llm",
+      "description": "Redacta la respuesta final al cliente con la persona del agente. Aplica el price guard determinista: si menciona montos fuera de la evidencia, reintenta una vez y si persiste escala.",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "price_guard": { "type": "boolean", "default": true },
+          "max_questions": { "type": "integer", "minimum": 0, "default": 1 }
+        }
+      }
+    },
+    "followup": {
+      "kind": "deterministic",
+      "description": "Programa/gestiona seguimientos del hilo (recordatorios de cotización, próximos pasos).",
+      "params_schema": { "type": "object", "additionalProperties": false, "properties": {} }
+    },
+    "escalation": {
+      "kind": "deterministic",
+      "description": "Cierra el turno derivándolo a un humano, registrando la razón de escalación.",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "notify_channel": { "type": "string" }
+        }
+      }
+    }
+  }
+}

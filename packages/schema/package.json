@@ -1,0 +1,33 @@
+{
+  "name": "@russell/schema",
+  "version": "0.1.0",
+  "description": "Formato Russell: JSON Schema del agente conversacional + catálogo de tipos de nodo + tipos TypeScript",
+  "license": "MIT",
+  "keywords": ["russell", "agents", "schema", "hyperflow"],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./schemas/russell.schema.json": "./schemas/russell.schema.json",
+    "./schemas/node-types.json": "./schemas/node-types.json"
+  },
+  "files": [
+    "dist",
+    "schemas"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "~5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

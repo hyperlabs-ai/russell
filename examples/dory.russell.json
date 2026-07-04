@@ -1,0 +1,153 @@
+{
+  "russellVersion": "1.0",
+  "meta": {
+    "slug": "dory",
+    "name": "Dory",
+    "domain": "sales",
+    "description": "Asesor de ventas B2B: pedidos, cotizaciones y conversación general. Réplica declarativa del pipeline DORY_SHOPPING (N0–N8) para el gate de paridad.",
+    "tags": ["ventas", "cotizaciones", "whatsapp"]
+  },
+  "persona": {
+    "agent_name": "Dory",
+    "tono": "semiformal",
+    "idioma": "es_MX"
+  },
+  "defaults": {
+    "model": "gpt-4o",
+    "fast_model": "gpt-4o-mini"
+  },
+  "context_sources": {
+    "discovery": true,
+    "catalog": true,
+    "memories": true,
+    "crm": true,
+    "budget_chars": 4000
+  },
+  "nodes": [
+    {
+      "id": "n_guard",
+      "type": "input_guard",
+      "name": "Guard de ingreso",
+      "params": { "detect_injection": true },
+      "evaluator": "prompt_injection"
+    },
+    {
+      "id": "n0_aggregator",
+      "type": "aggregator",
+      "name": "Agregador de mensajes"
+    },
+    {
+      "id": "n1_reception",
+      "type": "reception",
+      "name": "Recepción y normalización"
+    },
+    {
+      "id": "n2_intent",
+      "type": "llm_classifier",
+      "name": "Clasificación de intención",
+      "llm": { "model": "gpt-4o-mini", "temperature": 0, "timeout_s": 15, "json_mode": true },
+      "compose": { "with_persona": false, "with_context": false },
+      "params": {
+        "labels": [
+          "NUEVO_PEDIDO",
+          "SEGUIMIENTO_COTIZACION",
+          "PREGUNTA_PRODUCTO",
+          "NEGOCIACION_PRECIO",
+          "QUEJA",
+          "SALUDO_INICIAL",
+          "OTRO"
+        ],
+        "fallback_label": "OTRO",
+        "confidence_threshold": 0.7,
+        "escalate_below_threshold": true,
+        "history_turns": 4
+      },
+      "evaluator": "dory_n2_intent"
+    },
+    {
+      "id": "n3a_extraction",
+      "type": "llm_extractor",
+      "name": "Extracción de pedido (texto)",
+      "llm": { "model": "gpt-4o-mini", "json_mode": true },
+      "compose": { "with_context": true, "slices": ["catalog"] },
+      "params": { "output_key": "items" },
+      "evaluator": "dory_n3a_extraction"
+    },
+    {
+      "id": "n3b_vision",
+      "type": "llm_vision",
+      "name": "Extracción de pedido (imagen)",
+      "llm": { "model": "gpt-4o" },
+      "params": { "output_key": "items" },
+      "evaluator": "dory_n3b_vision"
+    },
+    {
+      "id": "n3c_general",
+      "type": "llm_prompt",
+      "name": "Conversación general",
+      "compose": { "with_persona": true, "with_context": true },
+      "params": { "output_key": "respuesta" },
+      "evaluator": "dory_n3c_general"
+    },
+    {
+      "id": "n_intake",
+      "type": "intake",
+      "name": "Intake de pedido"
+    },
+    {
+      "id": "n4_catalog",
+      "type": "catalog_search",
+      "name": "Búsqueda en catálogo"
+    },
+    {
+      "id": "n5_quote",
+      "type": "quote_builder",
+      "name": "Cotización",
+      "params": { "commit_enabled": false, "valid_days": 15, "auto_send": false }
+    },
+    {
+      "id": "n6_response",
+      "type": "response_composer",
+      "name": "Respuesta al cliente",
+      "llm": { "model": "gpt-4o-mini", "temperature": 0.5, "max_tokens": 160, "timeout_s": 15 },
+      "compose": { "with_persona": true, "with_context": true, "slices": ["crm", "discovery"] },
+      "params": { "price_guard": true, "max_questions": 1 },
+      "evaluator": "dory_n6_response"
+    },
+    {
+      "id": "n7_followup",
+      "type": "followup",
+      "name": "Seguimiento"
+    },
+    {
+      "id": "n8_escalation",
+      "type": "escalation",
+      "name": "Escalación a humano"
+    }
+  ],
+  "graph": {
+    "entry": ["n_guard", "n0_aggregator", "n1_reception", "n2_intent"],
+    "branch_after": "n2_intent",
+    "routes": [
+      {
+        "when": { "intent": "NUEVO_PEDIDO", "media": ["imagen", "mixto"] },
+        "sequence": ["n3b_vision", "n4_catalog", "n_intake", "n5_quote", "n6_response", "n7_followup"]
+      },
+      {
+        "when": { "intent": "NUEVO_PEDIDO" },
+        "sequence": ["n3a_extraction", "n4_catalog", "n_intake", "n5_quote", "n6_response", "n7_followup"]
+      },
+      {
+        "sequence": ["n3c_general", "n6_response"]
+      }
+    ],
+    "escalation_node": "n8_escalation"
+  },
+  "guards": {
+    "input": { "detect_injection": true },
+    "price": { "enabled": true, "retry_once": true, "escalate_on_violation": true }
+  },
+  "escalation": {
+    "confidence_threshold": 0.7
+  }
+}

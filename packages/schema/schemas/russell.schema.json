@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://russell.hyperdigital.mx/schemas/russell-1.0.schema.json",
+  "title": "Russell Agent Definition",
+  "description": "Definición declarativa, versionada y portable de un agente conversacional. No contiene secretos ni referencias a clases de ningún lenguaje: los `type` de nodo referencian un registry que cada runtime implementa.",
+  "type": "object",
+  "required": ["russellVersion", "meta", "nodes", "graph"],
+  "additionalProperties": false,
+  "properties": {
+    "russellVersion": {
+      "description": "Versión del formato Russell. Los runtimes rechazan versiones que no soportan.",
+      "const": "1.0"
+    },
+    "meta": {
+      "type": "object",
+      "required": ["slug", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "slug": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "domain": { "type": "string" },
+        "description": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "persona": {
+      "description": "Identidad y reglas del agente. Se compone como bloque de sistema en los nodos con `compose.with_persona: true`.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "agent_name": { "type": "string" },
+        "tono": { "enum": ["formal", "semiformal", "casual"] },
+        "idioma": { "type": "string" },
+        "personality": { "type": "string" },
+        "response_rules": { "type": "string" },
+        "custom_instructions": { "type": "string" },
+        "seller_assignment_rules": { "type": "string" }
+      }
+    },
+    "defaults": {
+      "description": "Parámetros LLM por defecto; cada nodo puede sobreescribirlos en `llm`.",
+      "$ref": "#/$defs/llmParams"
+    },
+    "context_sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "discovery": { "type": "boolean", "default": true },
+        "catalog": { "type": "boolean", "default": true },
+        "memories": { "type": "boolean", "default": true },
+        "crm": { "type": "boolean", "default": true },
+        "budget_chars": { "type": "integer", "minimum": 200, "default": 4000 }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "graph": {
+      "description": "Topología: secuencia de entrada, nodo de branching y rutas (adyacencia). El turno solo puede seguir una secuencia declarada aquí.",
+      "type": "object",
+      "required": ["entry", "routes"],
+      "additionalProperties": false,
+      "properties": {
+        "entry": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/nodeId" }
+        },
+        "branch_after": {
+          "description": "Nodo tras el cual se resuelve la ruta. Si se omite, se usa el último de `entry`.",
+          "$ref": "#/$defs/nodeId"
+        },
+        "routes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/route" }
+        },
+        "escalation_node": { "$ref": "#/$defs/nodeId" }
+      }
+    },
+    "guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max_chars": { "type": "integer", "minimum": 1 },
+            "detect_injection": { "type": "boolean", "default": true }
+          }
+        },
+        "price": {
+          "description": "Guard determinista: la respuesta solo puede mencionar montos presentes en la evidencia del turno.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "retry_once": { "type": "boolean", "default": true },
+            "escalate_on_violation": { "type": "boolean", "default": true }
+          }
+        }
+      }
+    },
+    "escalation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "confidence_threshold": {
+          "description": "Si la confianza de clasificación queda por debajo, el turno escala a humano.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "nodeId": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "contextSlice": { "enum": ["discovery", "catalog", "memories", "crm"] },
+    "llmParams": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "model": { "type": "string" },
+        "fast_model": { "type": "string" },
+        "temperature": { "type": "number", "minimum": 0, "maximum": 2 },
+        "max_tokens": { "type": "integer", "minimum": 1 },
+        "timeout_s": { "type": "integer", "minimum": 1 },
+        "json_mode": { "type": "boolean" }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/nodeId" },
+        "type": {
+          "description": "Tipo del registry de nodos (ver node-types.json). Neutral al lenguaje.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "name": { "type": "string" },
+        "prompt": {
+          "description": "Prompt del nodo (texto completo). Solo aplica a nodos de kind `llm`.",
+          "type": "string"
+        },
+        "llm": { "$ref": "#/$defs/llmParams" },
+        "compose": {
+          "description": "Cómo se arma el mensaje de sistema: persona y/o rebanadas de contexto antepuestas al prompt del nodo.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "with_persona": { "type": "boolean", "default": false },
+            "with_context": { "type": "boolean", "default": false },
+            "slices": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/contextSlice" }
+            },
+            "budget_chars": { "type": "integer", "minimum": 200 }
+          }
+        },
+        "params": {
+          "description": "Parámetros específicos del tipo de nodo; validados contra el `params_schema` del catálogo.",
+          "type": "object"
+        },
+        "evaluator": {
+          "description": "Slug del LLM-judge que evalúa este nodo (sistema de evals).",
+          "type": "string"
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "required": ["sequence"],
+      "additionalProperties": false,
+      "properties": {
+        "when": {
+          "description": "Condición de la ruta. Campos omitidos actúan como comodín; la primera ruta que matchea gana (el orden importa).",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "intent": { "type": "string" },
+            "media": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "sequence": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/nodeId" }
+        }
+      }
+    }
+  }
+}
