@@ -1,6 +1,6 @@
 {
   "name": "russell-validator",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Validator and CLI for Russell agent definitions: structural (JSON Schema) + semantic (graph integrity, node type catalog, per-type params)",
   "license": "MIT",
   "author": "Hyperlabs AI <cris@hyperdigital.mx>",
@@ -26,7 +26,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "russell": "./dist/cli.js"
+    "russell": "dist/cli.js"
   },
   "exports": {
     ".": {
@@ -47,7 +47,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "russell-schema": "0.1.0",
+    "russell-schema": "^0.2.0",
     "ajv": "^8.17.1"
   },
   "devDependencies": {
