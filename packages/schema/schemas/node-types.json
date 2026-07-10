@@ -1,6 +1,6 @@
 {
-  "catalogVersion": "1.0",
-  "description": "Catálogo de tipos de nodo Russell v1. Cada runtime (Python hoy, TS después) implementa este registry con la misma semántica. `kind: deterministic` = sin LLM (rápido, barato, testeable); `kind: llm` = invoca un modelo.",
+  "catalogVersion": "1.1",
+  "description": "Catálogo de tipos de nodo Russell. Cada runtime (Python hoy, TS después) implementa este registry con la misma semántica. `kind: deterministic` = sin LLM (rápido, barato, testeable); `kind: llm` = invoca un modelo. v1.1 añade los nodos de flujos AUTÓNOMOS (Auto Mode): `trigger`, `crm_action`, `send_message` — un grafo lineal sin `branch_after`/`routes` que arranca de un evento en vez de un mensaje entrante.",
   "types": {
     "input_guard": {
       "kind": "deterministic",
@@ -140,6 +140,48 @@
         "additionalProperties": false,
         "properties": {
           "notify_channel": { "type": "string" }
+        }
+      }
+    },
+    "trigger": {
+      "kind": "deterministic",
+      "description": "Nodo de ENTRADA de un flujo autónomo: siembra el estado desde el payload de un evento (lead.created, cart.abandoned, …) en vez de un mensaje entrante. Con `event_type` filtra: si el evento no coincide, el flujo no avanza. Va primero en el `entry` de un grafo lineal.",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "event_type": { "type": "string", "description": "Si se declara, el flujo solo corre para este tipo de evento." }
+        }
+      }
+    },
+    "crm_action": {
+      "kind": "deterministic",
+      "description": "Ejecuta UNA escritura en el CRM (hyperflow-core) vía el cliente S2S idempotente: crear contacto/empresa/oportunidad/actividad/cotización/pedido. El body se arma con `body` + las claves de `body_from` copiadas del payload del evento. Error → escala.",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action"],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["create_contact", "create_company", "create_deal", "create_activity", "create_quote", "create_order"]
+          },
+          "body": { "type": "object", "description": "Cuerpo base del request a core." },
+          "body_from": { "type": "array", "items": { "type": "string" }, "description": "Claves del payload del evento a copiar al body." },
+          "idempotency_key": { "type": "string" }
+        }
+      }
+    },
+    "send_message": {
+      "kind": "llm",
+      "description": "Saliente PROACTIVO (email/WhatsApp) sin turno entrante. Genera el cuerpo con el planner evidence-grounded (guard de montos) desde el payload del evento y lo ENTREGA vía hyperflow-core (Resend / hyper-wa). Con `template_sid` manda una plantilla en frío de WhatsApp sin LLM. Destino tomado del payload (phone/email).",
+      "params_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "channel": { "type": "string", "enum": ["email", "whatsapp"], "description": "Default: whatsapp si hay teléfono, si no email." },
+          "template_sid": { "type": "string", "description": "Content SID de Twilio: manda plantilla en frío sin llamar al LLM." },
+          "flow_type": { "type": "string", "description": "Etiqueta para el planner (default: tipo del evento)." }
         }
       }
     }

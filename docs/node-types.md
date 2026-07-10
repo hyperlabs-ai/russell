@@ -47,6 +47,33 @@ The machine-readable catalog (including each type's `params_schema`) is [`packag
 | `followup` | deterministic | Schedules/manages thread follow-ups (quote reminders, next steps) |
 | `escalation` | deterministic | Ends the turn by handing off to a human, recording the escalation reason (`notify_channel`) |
 
+## Catalog v1.1 — Autonomous flows
+
+v1.0 nodes all assume an **inbound customer turn**. v1.1 adds three nodes for **autonomous flows**: a graph that starts from an *event* (lead created, cart abandoned) with no incoming message. Such a graph is **linear** — `entry` runs start-to-finish with no `branch_after`/`routes`.
+
+| Type | Kind | Purpose |
+|---|---|---|
+| `trigger` | deterministic | ENTRY node of an autonomous flow: seeds state from an event payload instead of a message. `event_type` filters — if the event doesn't match, the flow doesn't advance. Goes first in `entry` |
+| `crm_action` | deterministic | Performs ONE CRM write in the host (create contact/company/deal/activity/quote/order) via the idempotent S2S client. Body is `body` plus the keys in `body_from` copied from the event payload. On error, escalates |
+| `send_message` | llm | Proactive outbound (email/WhatsApp) with no inbound turn. Generates the body with the evidence-grounded planner (amount guard) from the event payload and delivers it through the host. `template_sid` sends a WhatsApp cold-start template with no LLM. Target is read from the payload (`phone`/`email`) |
+
+A minimal autonomous agent:
+
+```json
+{
+  "russellVersion": "1.0",
+  "meta": { "slug": "lead_autoflow", "name": "Lead Autoflow" },
+  "nodes": [
+    { "id": "trg", "type": "trigger", "params": { "event_type": "lead.created" } },
+    { "id": "crm", "type": "crm_action", "params": { "action": "create_contact", "body_from": ["email", "name", "phone"] } },
+    { "id": "msg", "type": "send_message", "params": { "channel": "whatsapp" } }
+  ],
+  "graph": { "entry": ["trg", "crm", "msg"] }
+}
+```
+
+Note `russellVersion` stays `"1.0"` (the definition-format version); the **catalog** version bumps to `1.1` because the node vocabulary grew.
+
 ## Extending the catalog
 
 New capabilities are added by (1) implementing the node in a runtime, (2) adding its entry + `params_schema` to `node-types.json`, and (3) bumping the catalog version. Definitions referencing a type a runtime doesn't implement must be rejected at load time — never silently skipped.
