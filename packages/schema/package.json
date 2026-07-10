@@ -1,6 +1,6 @@
 {
   "name": "russell-schema",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Russell agent format: JSON Schema for declarative conversational agents, node type catalog, and TypeScript types",
   "license": "MIT",
   "author": "Hyperlabs AI <cris@hyperdigital.mx>",
